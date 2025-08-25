@@ -15,6 +15,7 @@ const GPUMonitorIndicator = GObject.registerClass(
 class GPUMonitorIndicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, "GPU Monitor");
+        this.add_style_class_name('gpu-monitor-button')
         
         this.box = new St.BoxLayout({ 
             vertical: false,
@@ -120,10 +121,15 @@ class GPUMonitorIndicator extends PanelMenu.Button {
 
                     // 更新下拉菜单
                     this.menuItems.RCS.set_text(`Render/3D: ${rcs}%`);
+                    this._updateMenuStyle(this.menuItems.RCS, rcs);
                     this.menuItems.BCS.set_text(`Blitter: ${bcs}%`);
+                    this._updateMenuStyle(this.menuItems.BCS, bcs);
                     this.menuItems.VCS.set_text(`Video: ${vcs}%`);
+                    this._updateMenuStyle(this.menuItems.VCS, vcs);
                     this.menuItems.VECS.set_text(`VideoEnhance: ${vecs}%`);
+                    this._updateMenuStyle(this.menuItems.VECS, vecs);
                     this.menuItems.CCS.set_text(`Compute: ${ccs}%`);
+                    this._updateMenuStyle(this.menuItems.CCS, ccs);
 
                     return;
                 }
@@ -194,11 +200,14 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         this.label.remove_style_class_name('gpu-monitor-label-medium');
         this.label.remove_style_class_name('gpu-monitor-label-max');
         this.label.remove_style_class_name('gpu-monitor-label-error');
+        this.remove_style_class_name('gpu-monitor-bg-max');
+        this.gpuIcon.remove_style_class_name('gpu-icon-red');
         
         if (usage > 95) {
             this.label.add_style_class_name('gpu-monitor-label-max');
-        }
-        else if (usage > 80) {
+            this.add_style_class_name('gpu-monitor-bg-max');
+            this.gpuIcon.add_style_class_name('gpu-icon-red');
+        } else if (usage > 80) {
             this.label.add_style_class_name('gpu-monitor-label-high');
         } else if (usage > 60) {
             this.label.add_style_class_name('gpu-monitor-label-medium');
@@ -206,6 +215,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     }
 
     _updateMenuStyle(label, usage) {
+        if (!label) return;
         label.remove_style_class_name('gpu-menu-high');
         label.remove_style_class_name('gpu-menu-medium');
         label.remove_style_class_name('gpu-menu-max');

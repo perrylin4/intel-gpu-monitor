@@ -6,23 +6,22 @@
 }
 
 .gpu-monitor-label-medium {
-    color: #f9f055;
+    color: #f9f055 !important;
 }
 
 .gpu-monitor-label-high {
-    color: #ff6b6b;
+    color: #ff6b6b !important;
 }
 
 .gpu-monitor-label-max {
-    background-color: #f9f055;
-    color: #ff0000;
+    color: #ff0000 !important;
     font-weight: bold;
     animation: pulse 1s infinite alternate;
 }
 
 .gpu-monitor-label-error {
-    color: white;
-    background-color: #f44336;
+    color: white !important;
+    background-color: #ff0000;
 }
 
 @keyframes pulse {
@@ -32,7 +31,7 @@
 
 /* 下拉菜单文字样式 */
 .gpu-monitor-menu-label {
-    color: black;                  /* 黑色文字 */
+    color: black !important;                  /* 黑色文字 */
     font-family: monospace;        /* 等宽字体 */
     font-size: 16px;               /* 适中字体 */
     padding: 2px 6px;              /* 上下左右间距 */
@@ -42,17 +41,42 @@
 
 /* 中等负载 */
 .gpu-menu-medium {
-    color: #fdd835; /* 黄色 */
+    color: #fdd835 !important; /* 黄色 */
 }
 
 /* 高负载 */
 .gpu-menu-high {
-    color: #f57f17; /* 橙色 */
+    color: #f57f17 !important; /* 橙色 */
 }
 
 /* 几乎满载 */
 .gpu-menu-max {
-    background-color: #fdd835;
-    color: #e53935; /* 红色 */
+    color: #ff0400 !important; /* 红色 */
     font-weight: bold; /* 加粗 */
+    border-radius: 6px; /* 圆角 */
+    background-color: #ff9244;
+}
+
+.gpu-icon-red {
+    color: #ff0000 !important;
+}
+
+/* 顶栏 GPU 按钮的公共样式 */
+.gpu-monitor-button {
+    padding: 2px 10px;
+    border-radius: 999px; /* 圆角 */
+    background-color: transparent;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* GPU 满载时黄色背景 */
+.gpu-monitor-bg-max {
+    background-color: #ffd500 !important; /* 亮黄色 */
+    border-radius: 999px !important;
+}
+
+/* 悬停时稍微变白一些 */
+.gpu-monitor-bg-max:hover {
+    background-color: #ffe85a !important; /* 淡黄白 */
+    box-shadow: 0 0 4px rgba(255, 240, 100, 0.6);
 }
