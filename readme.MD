@@ -1,8 +1,7 @@
 # Intel GPU Monitor for GNOME Shell
 
 > 一个用于 **GNOME Shell** 的扩展，可以在顶栏实时显示 Intel GPU 的使用率。
-
-![screenshot](icons/gpu-symbolic.svg)
+~~perry_lin: 纯粹因为玩mc看不了intel核显占用所以写了（~~
 
 ## ✨ 功能
 - 在 GNOME 顶栏实时显示 Intel GPU 占用率（百分比）
@@ -137,8 +136,6 @@ sudo journalctl -u gpu-data-collector.service -f
 ## ✅ 已测试环境
 - GNOME Shell 46 ✅
 - Ubuntu 24.04 ✅
-- Fedora 41 ✅
-- Arch Linux ✅
 
 如果 GNOME Shell 版本较低，可能需要修改 `metadata.json`。
 
