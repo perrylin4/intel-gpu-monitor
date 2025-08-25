@@ -3,13 +3,13 @@ import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import * as Me from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const LOG_PATH = '/var/lib/gpu-monitor/gpu_stats.txt';
-const ICON_PATH = `${Me.dir.get_child('icons').get_child('gpu-symbolic.svg').get_path()}`;
-const REFRESH_INTERVAL = 2; // 刷新间隔(秒)
+const ICON_PATH = `${GLib.get_home_dir()}/.local/share/gnome-shell/extensions/intel-gpu-monitor@perry_lin/icons/gpu-symbolic.svg`;
+const REFRESH_INTERVAL = 1; // 刷新间隔(秒)
 
 const GPUMonitorIndicator = GObject.registerClass(
 class GPUMonitorIndicator extends PanelMenu.Button {
@@ -47,6 +47,21 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         });
         this.box.add_child(this.label);
         
+        // 下拉菜单
+        this.menuItems = {};
+        ['RCS', 'BCS', 'VCS', 'VECS', 'CCS'].forEach(name => {
+            const item = new St.Label({ 
+                text: `${name}: 0%`, 
+                x_align: Clutter.ActorAlign.START,
+                style_class: 'gpu-monitor-menu-label'   // 添加样式类
+            });
+            const menuItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+            menuItem.add_child(item);
+            this.menu.addMenuItem(menuItem);
+            this.menuItems[name] = item;
+        });
+
+        
         this._timeoutId = null;
         this._setRefreshTimer();
     }
@@ -83,16 +98,34 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                 // 获取最后一行非空行
                 const lines = text.split('\n').filter(line => line.trim() !== '');
                 if (lines.length > 0) {
-                    const lastLine = lines[lines.length - 1];
-                    
-                    // 解析GPU使用率
-                    const usage = this._parseGpuUsage(lastLine);
-                    
-                    if (usage !== null) {
-                        this.label.text = `${usage}%`;
-                        this._updateStyle(usage);
+                    const lastLine = lines[lines.length - 1].trim();
+
+                    // 表格格式匹配: Freq act IRQ RC6 gpu pkg RCS BCS VCS VECS CCS
+                    const parts = lastLine.split(/\s+/);
+                    if (parts.length < 19) {
+                        this.label.text = 'NODATA';
                         return;
                     }
+
+                    // 渲染引擎占用率
+                    const rcs = parseFloat(parts[6]);
+                    const bcs = parseFloat(parts[9]);
+                    const vcs = parseFloat(parts[12]);
+                    const vecs = parseFloat(parts[15]);
+                    const ccs = parseFloat(parts[18] || 0);
+
+                    const maxUsage = Math.max(rcs, bcs, vcs, vecs, ccs);
+                    this.label.text = `${maxUsage}%`;
+                    this._updateStyle(maxUsage);
+
+                    // 更新下拉菜单
+                    this.menuItems.RCS.set_text(`Render/3D: ${rcs}%`);
+                    this.menuItems.BCS.set_text(`Blitter: ${bcs}%`);
+                    this.menuItems.VCS.set_text(`Video: ${vcs}%`);
+                    this.menuItems.VECS.set_text(`VideoEnhance: ${vecs}%`);
+                    this.menuItems.CCS.set_text(`Compute: ${ccs}%`);
+
+                    return;
                 }
             }
             

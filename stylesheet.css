@@ -13,6 +13,13 @@
     animation: pulse 1s infinite alternate;
 }
 
+.gpu-monitor-menu-label {
+    color: black;          /* 设置黑色 */
+    font-family: monospace;
+    font-size: 18px;
+}
+
+
 .gpu-menu-item {
     font-family: monospace;
     font-size: 12px;
