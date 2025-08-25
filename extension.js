@@ -13,39 +13,24 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, "GPU Monitor");
         
-        // 创建主容器
         this.box = new St.BoxLayout({ 
             vertical: false,
-            style_class: 'panel-status-menu-box',
-            x_expand: false,
-            x_align: Clutter.ActorAlign.START // 左对齐
+            style_class: 'panel-status-menu-box'
         });
         this.add_child(this.box);
         
-        // 使用更合适的GPU图标
         this.gpuIcon = new St.Icon({
-            gicon: Gio.icon_new_for_string('gpu-symbolic'),
-            fallback_icon_name: 'video-display-symbolic',
-            style_class: 'system-status-icon',
-            icon_size: 16
+            icon_name: 'video-display-symbolic',
+            style_class: 'system-status-icon'
         });
         this.box.add_child(this.gpuIcon);
         
-        // 百分比标签 - 仅显示数值
         this.label = new St.Label({ 
-            text: "0.0",
+            text: "0%",
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'gpu-monitor-label'
         });
         this.box.add_child(this.label);
-        
-        // 百分比符号标签
-        this.percentSymbol = new St.Label({ 
-            text: "%",
-            y_align: Clutter.ActorAlign.CENTER,
-            style_class: 'gpu-monitor-symbol'
-        });
-        this.box.add_child(this.percentSymbol);
         
         this._timeoutId = null;
         this._setRefreshTimer();
@@ -70,7 +55,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         try {
             // 检查文件是否存在
             if (!GLib.file_test(LOG_PATH, GLib.FileTest.EXISTS)) {
-                this.label.text = "0.0";
+                this.label.text = "NOFILE";
                 return;
             }
             
@@ -89,18 +74,17 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     const usage = this._parseGpuUsage(lastLine);
                     
                     if (usage !== null) {
-                        // 保留1位小数
-                        this.label.text = usage.toFixed(1);
+                        this.label.text = `GPU: ${usage}%`;
                         this._updateStyle(usage);
                         return;
                     }
                 }
             }
             
-            this.label.text = "0.0";
+            this.label.text = "NODATA";
         } catch (e) {
             console.error(`GPU数据错误: ${e}`);
-            this.label.text = "0.0";
+            this.label.text = "ERR";
         }
     }
     
@@ -108,15 +92,28 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         // 移除行首行尾空白
         const trimmedLine = line.trim();
         
+        // 调试输出
+        console.log(`解析行: "${trimmedLine}"`);
+        
         // 尝试匹配表格格式的数据行
         const tableRowRegex = /^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/;
         const match = trimmedLine.match(tableRowRegex);
         
         if (match) {
+            // 列索引说明：
+            // 1: Freq req (MHz)
+            // 2: Freq act (MHz)
+            // 3: IRQ/s
+            // 4: RC6%
+            // 5: GPU Power (W)
+            // 6: Package Power (W)
+            // 7: RCS (渲染引擎)占用率
+            
             // 提取渲染引擎占用率
             const rcsUsage = parseFloat(match[7]);
             if (!isNaN(rcsUsage)) {
-                return rcsUsage;
+                console.log(`表格格式解析成功: ${rcsUsage}%`);
+                return Math.round(rcsUsage);
             }
         }
         
@@ -125,7 +122,8 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         if (fallbackMatch1 && fallbackMatch1[1]) {
             const usage = parseFloat(fallbackMatch1[1]);
             if (!isNaN(usage)) {
-                return usage;
+                console.log(`备选模式1解析成功: ${usage}%`);
+                return Math.round(usage);
             }
         }
         
@@ -134,10 +132,12 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         if (fallbackMatch2 && fallbackMatch2[1]) {
             const usage = parseFloat(fallbackMatch2[1]);
             if (!isNaN(usage)) {
-                return usage;
+                console.log(`备选模式2解析成功: ${usage}%`);
+                return Math.round(usage);
             }
         }
         
+        console.log("无法解析GPU使用率");
         return null;
     }
     
@@ -166,9 +166,7 @@ let indicator = null;
 export default class GPUMonitorExtension {
     enable() {
         indicator = new GPUMonitorIndicator();
-        
-        // 添加到面板左侧区域
-        Main.panel.addToStatusArea('gpu-monitor-indicator', indicator, 0, 'left');
+        Main.panel.addToStatusArea('gpu-monitor-indicator', indicator);
     }
     
     disable() {

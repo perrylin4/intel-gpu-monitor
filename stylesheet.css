@@ -1,35 +1,13 @@
-/* 主容器样式 */
-.panel-status-menu-box {
-    spacing: 4px;
-    padding: 0 6px;
-}
-
-/* GPU图标样式 */
-.system-status-icon {
-    icon-size: 16px;
-    color: #f5f5f5;
-}
-
-/* 百分比数值样式 */
 .gpu-monitor-label {
-    font-family: 'Fira Code', 'Monospace', monospace;
+    font-family: monospace;
     font-size: 11px;
     font-weight: bold;
-    color: #f5f5f5;
-    min-width: 30px;
-    text-align: right;
+    margin: 0 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background-color: rgba(0,0,0,0.3);
 }
 
-/* 百分比符号样式 */
-.gpu-monitor-symbol {
-    font-family: 'Fira Code', 'Monospace', monospace;
-    font-size: 9px;
-    font-weight: bold;
-    color: #a0a0a0;
-    margin-left: -3px;
-}
-
-/* 状态样式 */
 .gpu-monitor-label-medium {
     color: #f9f055;
 }
@@ -37,6 +15,11 @@
 .gpu-monitor-label-high {
     color: #ff6b6b;
     animation: pulse 1s infinite alternate;
+}
+
+.gpu-monitor-label-error {
+    color: white;
+    background-color: #f44336;
 }
 
 @keyframes pulse {
