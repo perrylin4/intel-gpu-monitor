@@ -18,13 +18,14 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             vertical: false,
             style_class: 'panel-status-menu-box',
             x_expand: false,
-            x_align: Clutter.ActorAlign.END // 右对齐
+            x_align: Clutter.ActorAlign.START // 左对齐
         });
         this.add_child(this.box);
         
-        // 使用内置图标避免加载问题
+        // 使用更合适的GPU图标
         this.gpuIcon = new St.Icon({
-            icon_name: 'video-display-symbolic',
+            gicon: Gio.icon_new_for_string('gpu-symbolic'),
+            fallback_icon_name: 'video-display-symbolic',
             style_class: 'system-status-icon',
             icon_size: 16
         });
@@ -47,12 +48,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         this.box.add_child(this.percentSymbol);
         
         this._timeoutId = null;
-        
-        // 延迟启动数据读取
-        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
-            this._setRefreshTimer();
-            return GLib.SOURCE_REMOVE;
-        });
+        this._setRefreshTimer();
     }
     
     _setRefreshTimer() {
@@ -60,7 +56,6 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             GLib.Source.remove(this._timeoutId);
             this._timeoutId = null;
         }
-        
         this._timeoutId = GLib.timeout_add_seconds(
             GLib.PRIORITY_DEFAULT,
             REFRESH_INTERVAL,
@@ -110,14 +105,46 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     }
     
     _parseGpuUsage(line) {
-        // 简化解析逻辑 - 只提取第一个浮点数
-        const match = line.match(/\d+\.\d+/);
-        return match ? parseFloat(match[0]) : null;
+        // 移除行首行尾空白
+        const trimmedLine = line.trim();
+        
+        // 尝试匹配表格格式的数据行
+        const tableRowRegex = /^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/;
+        const match = trimmedLine.match(tableRowRegex);
+        
+        if (match) {
+            // 提取渲染引擎占用率
+            const rcsUsage = parseFloat(match[7]);
+            if (!isNaN(rcsUsage)) {
+                return rcsUsage;
+            }
+        }
+        
+        // 备选方案1：尝试匹配特定模式
+        const fallbackMatch1 = line.match(/(\d+\.\d+)\s+render/);
+        if (fallbackMatch1 && fallbackMatch1[1]) {
+            const usage = parseFloat(fallbackMatch1[1]);
+            if (!isNaN(usage)) {
+                return usage;
+            }
+        }
+        
+        // 备选方案2：尝试匹配通用占用率模式
+        const fallbackMatch2 = line.match(/(\d+\.\d+)%/);
+        if (fallbackMatch2 && fallbackMatch2[1]) {
+            const usage = parseFloat(fallbackMatch2[1]);
+            if (!isNaN(usage)) {
+                return usage;
+            }
+        }
+        
+        return null;
     }
     
     _updateStyle(usage) {
         this.label.remove_style_class_name('gpu-monitor-label-high');
         this.label.remove_style_class_name('gpu-monitor-label-medium');
+        this.label.remove_style_class_name('gpu-monitor-label-error');
         
         if (usage > 85) {
             this.label.add_style_class_name('gpu-monitor-label-high');
@@ -138,33 +165,17 @@ let indicator = null;
 
 export default class GPUMonitorExtension {
     enable() {
-        try {
-            indicator = new GPUMonitorIndicator();
-            
-            // 添加到左侧区域的最右侧
-            const leftBox = Main.panel._leftBox;
-            leftBox.add_child(indicator);
-            
-            // 将指示器移动到左侧区域的末尾
-            const children = leftBox.get_children();
-            if (children.length > 0) {
-                const lastChild = children[children.length - 1];
-                leftBox.set_child_below_sibling(indicator, lastChild);
-            }
-        } catch (e) {
-            console.error("扩展启用失败:", e);
-        }
+        indicator = new GPUMonitorIndicator();
+        
+        // 添加到面板左侧区域
+        Main.panel.addToStatusArea('gpu-monitor-indicator', indicator, 0, 'left');
     }
     
     disable() {
-        try {
-            if (indicator) {
-                indicator.stop();
-                indicator.destroy();
-                indicator = null;
-            }
-        } catch (e) {
-            console.error("扩展禁用失败:", e);
+        if (indicator) {
+            indicator.stop();
+            indicator.destroy();
+            indicator = null;
         }
     }
 }
