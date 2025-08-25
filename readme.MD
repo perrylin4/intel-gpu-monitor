@@ -2,6 +2,7 @@
 
 > 一个用于 **GNOME Shell** 的扩展，可以在顶栏实时显示 Intel GPU 的使用率。
 <br>
+
 ~~perry_lin: 纯粹因为玩mc看不了intel核显占用所以写了（~~
 
 ## ✨ 功能
