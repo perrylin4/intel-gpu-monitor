@@ -192,12 +192,30 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     _updateStyle(usage) {
         this.label.remove_style_class_name('gpu-monitor-label-high');
         this.label.remove_style_class_name('gpu-monitor-label-medium');
+        this.label.remove_style_class_name('gpu-monitor-label-max');
         this.label.remove_style_class_name('gpu-monitor-label-error');
         
-        if (usage > 85) {
+        if (usage > 95) {
+            this.label.add_style_class_name('gpu-monitor-label-max');
+        }
+        else if (usage > 80) {
             this.label.add_style_class_name('gpu-monitor-label-high');
         } else if (usage > 60) {
             this.label.add_style_class_name('gpu-monitor-label-medium');
+        }
+    }
+
+    _updateMenuStyle(label, usage) {
+        label.remove_style_class_name('gpu-menu-high');
+        label.remove_style_class_name('gpu-menu-medium');
+        label.remove_style_class_name('gpu-menu-max');
+
+        if (usage > 95) {
+            label.add_style_class_name('gpu-menu-max'); // 红色加粗
+        } else if (usage > 80) {
+            label.add_style_class_name('gpu-menu-high'); // 橙色
+        } else if (usage > 60) {
+            label.add_style_class_name('gpu-menu-medium'); // 黄色
         }
     }
     

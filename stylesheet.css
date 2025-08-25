@@ -1,3 +1,4 @@
+/* 顶栏GPU使用率显示 */
 .gpu-monitor-label {
     font-family: monospace;
     font-size: 18px;
@@ -10,20 +11,13 @@
 
 .gpu-monitor-label-high {
     color: #ff6b6b;
+}
+
+.gpu-monitor-label-max {
+    background-color: #f9f055;
+    color: #ff0000;
+    font-weight: bold;
     animation: pulse 1s infinite alternate;
-}
-
-.gpu-monitor-menu-label {
-    color: black;          /* 设置黑色 */
-    font-family: monospace;
-    font-size: 18px;
-}
-
-
-.gpu-menu-item {
-    font-family: monospace;
-    font-size: 12px;
-    padding: 4px 8px;
 }
 
 .gpu-monitor-label-error {
@@ -34,4 +28,31 @@
 @keyframes pulse {
     from { opacity: 1; }
     to { opacity: 0.6; }
+}
+
+/* 下拉菜单文字样式 */
+.gpu-monitor-menu-label {
+    color: black;                  /* 黑色文字 */
+    font-family: monospace;        /* 等宽字体 */
+    font-size: 16px;               /* 适中字体 */
+    padding: 2px 6px;              /* 上下左右间距 */
+    margin: 0;                      /* 去掉默认外边距 */
+}
+
+
+/* 中等负载 */
+.gpu-menu-medium {
+    color: #fdd835; /* 黄色 */
+}
+
+/* 高负载 */
+.gpu-menu-high {
+    color: #f57f17; /* 橙色 */
+}
+
+/* 几乎满载 */
+.gpu-menu-max {
+    background-color: #fdd835;
+    color: #e53935; /* 红色 */
+    font-weight: bold; /* 加粗 */
 }
