@@ -149,5 +149,3 @@ sudo journalctl -u gpu-data-collector.service -f
 
 ---
 
-## 📜 License
-MIT © Perry Lin

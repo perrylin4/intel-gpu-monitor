@@ -4,5 +4,6 @@
     "uuid": "intel-gpu-monitor@perry_lin",
     "shell-version": ["46"],
     "version": 1,
-    "url": ""
+    "url": "https://github.com/perrylin4/intel-gpu-monitor",
+    "license": "Unlicense"
 }
