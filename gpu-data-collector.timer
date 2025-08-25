@@ -1,0 +1,9 @@
+[Unit]
+Description=Restart GPU Data Collector every 30 minutes
+
+[Timer]
+OnUnitActiveSec=30m
+Unit=gpu-data-collector.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Intel GPU Data Collector
+After=network.target
+
+[Service]
+User=root
+ExecStartPre=/bin/rm -f /var/lib/gpu-monitor/gpu_stats.txt
+ExecStartPre=/bin/touch /var/lib/gpu-monitor/gpu_stats.txt
+ExecStartPre=/bin/chmod 644 /var/lib/gpu-monitor/gpu_stats.txt
+ExecStart=/usr/bin/bash -c "sudo /usr/bin/intel_gpu_top -o - > /var/lib/gpu-monitor/gpu_stats.txt"
+RuntimeMaxSec=1800
+Restart=always
+RestartSec=5
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

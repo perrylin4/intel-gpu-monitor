@@ -1,104 +1,57 @@
 #!/usr/bin/env bash
-
 set -e
 
-EXTENSION_UUID="intel-gpu-monitor@perry_lin"
-EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
-ICON_PATH="$EXTENSION_DIR/icons/gpu-symbolic.svg"
-LOG_PATH="/var/lib/gpu-monitor/gpu_stats.txt"
-SERVICE_PATH="/etc/systemd/system/gpu-data-collector.service"
-TIMER_PATH="/etc/systemd/system/gpu-data-collector.timer"
+EXTENSION_ID="intel-gpu-monitor@perry_lin"
+EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_ID"
 
-# ----------------------------
-# 1. 检查系统并安装依赖
-# ----------------------------
-echo "[INFO] 检查并安装依赖..."
+echo "=== Intel GPU Monitor Installer ==="
 
-if command -v apt &>/dev/null; then
-    sudo apt update
-    sudo apt install -y intel-gpu-tools gnome-shell-extensions
-elif command -v dnf &>/dev/null; then
-    sudo dnf install -y intel-gpu-tools gnome-shell-extension-appindicator
-elif command -v pacman &>/dev/null; then
-    sudo pacman -Sy --noconfirm intel-gpu-tools gnome-shell-extensions
+# 检查依赖
+echo "[1/5] 检查依赖..."
+for cmd in gnome-shell gnome-extensions rsync systemctl; do
+    if ! command -v $cmd &>/dev/null; then
+        echo "缺少依赖: $cmd"
+        echo "请先安装相关依赖后再运行 install.sh"
+        exit 1
+    fi
+done
+echo "依赖检查完成 ✅"
+
+# 检查是否已经在目标目录
+echo "[2/5] 安装 GNOME 扩展..."
+if [[ "$(realpath .)" == "$(realpath "$EXTENSION_DIR")" ]]; then
+    echo "⚠️ 检测到当前目录就是扩展安装目录，跳过复制"
 else
-    echo "[ERROR] 不支持的 Linux 发行版，请手动安装 intel-gpu-tools"
-    exit 1
+    mkdir -p "$EXTENSION_DIR"
+    rsync -av --delete ./ "$EXTENSION_DIR" \
+        --exclude "install.sh" \
+        --exclude "uninstall.sh" \
+        --exclude ".git" \
+        --exclude ".gitignore"
+    echo "扩展文件已复制到: $EXTENSION_DIR ✅"
 fi
 
-# ----------------------------
-# 2. 安装扩展
-# ----------------------------
-echo "[INFO] 安装 GNOME Shell 扩展..."
-
-mkdir -p "$HOME/.local/share/gnome-shell/extensions"
-cp -r "$(pwd)" "$EXTENSION_DIR"
-
-# 自动更新 ICON_PATH
-sed -i "s#const ICON_PATH = .*#const ICON_PATH = '$ICON_PATH';#" "$EXTENSION_DIR/extension.js"
-
-echo "[INFO] 扩展已复制到: $EXTENSION_DIR"
-
-# ----------------------------
-# 3. 配置 systemd service
-# ----------------------------
-echo "[INFO] 配置 systemd 服务..."
-
+# 安装 systemd 服务
+echo "[3/5] 安装 systemd 服务..."
 sudo mkdir -p /var/lib/gpu-monitor
-sudo touch "$LOG_PATH"
-sudo chmod 644 "$LOG_PATH"
-
-# 写入 gpu-data-collector.service
-sudo tee "$SERVICE_PATH" > /dev/null <<EOL
-[Unit]
-Description=Intel GPU Data Collector
-After=network.target
-
-[Service]
-User=root
-ExecStartPre=/bin/rm -f $LOG_PATH
-ExecStartPre=/bin/touch $LOG_PATH
-ExecStartPre=/bin/chmod 644 $LOG_PATH
-ExecStart=/usr/bin/bash -c "sudo /usr/bin/intel_gpu_top -o - > $LOG_PATH"
-RuntimeMaxSec=1800
-Restart=always
-RestartSec=5
-StandardOutput=null
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-# 写入 gpu-data-collector.timer
-sudo tee "$TIMER_PATH" > /dev/null <<EOL
-[Unit]
-Description=Restart GPU Data Collector every 30 minutes
-
-[Timer]
-OnUnitActiveSec=30m
-Unit=gpu-data-collector.service
-
-[Install]
-WantedBy=timers.target
-EOL
-
-# 启用并启动服务
+sudo cp gpu-data-collector.service /etc/systemd/system/
+sudo cp gpu-data-collector.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable gpu-data-collector.service
 sudo systemctl enable gpu-data-collector.timer
-sudo systemctl start gpu-data-collector.service
 sudo systemctl start gpu-data-collector.timer
+echo "systemd 服务已安装并启动 ✅"
 
-echo "[INFO] systemd 服务配置完成"
+# 启用扩展
+echo "[4/5] 启用 GNOME 扩展..."
+gnome-extensions enable "$EXTENSION_ID" || true
+echo "扩展已启用 ✅"
 
-# ----------------------------
-# 4. 启用 GNOME 扩展
-# ----------------------------
-echo "[INFO] 启用 GNOME 扩展..."
+# 重启 GNOME Shell
+echo "[5/5] 重启 GNOME Shell..."
+if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+    echo "请手动注销或按 Alt+F2 后输入 'r' 重启 GNOME Shell"
+else
+    gnome-shell --replace &
+fi
 
-gnome-extensions enable "$EXTENSION_UUID" || true
-
-echo "[INFO] 安装完成！请重启 GNOME Shell (Alt+F2 → 输入 r → 回车)"
-echo "[INFO] 如果 GPU 占用率显示异常，可检查日志:"
-echo "       sudo journalctl -u gpu-data-collector.service -f"
+echo "=== 安装完成！ ==="
