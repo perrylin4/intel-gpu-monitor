@@ -24,12 +24,6 @@
 ```bash
 # Debian / Ubuntu
 sudo apt update && sudo apt install intel-gpu-tools gnome-shell-extensions
-
-# Fedora / RHEL
-sudo dnf install intel-gpu-tools gnome-shell-extension-appindicator
-
-# Arch / Manjaro
-sudo pacman -S intel-gpu-tools gnome-shell-extensions
 ```
 
 ---
@@ -60,6 +54,8 @@ chmod +x install.sh
 Alt + F2 → 输入 r → 回车
 ```
 
+*或者干脆直接登出在进来，wayland无法用以上方式*
+
 ---
 
 ## 🛠 卸载扩展
@@ -81,7 +77,7 @@ chmod +x uninstall.sh
 
 ## 🧩 适配到其他电脑
 
-现在扩展是 **完全自适应** 的：
+现在扩展是 **自适应** 的：
 - 图标路径自动根据扩展目录动态计算，无需修改 `ICON_PATH`
 - GPU 数据文件路径固定为 `/var/lib/gpu-monitor/gpu_stats.txt`，保持一致即可
 - `metadata.json` 的 GNOME Shell 版本默认是：
