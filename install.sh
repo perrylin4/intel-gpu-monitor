@@ -37,8 +37,8 @@ sudo mkdir -p /var/lib/gpu-monitor
 sudo cp gpu-data-collector.service /etc/systemd/system/
 sudo cp gpu-data-collector.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable gpu-data-collector.timer
-sudo systemctl start gpu-data-collector.timer
+sudo systemctl enable gpu-data-collector.timer --now
+sudo systemctl enable gpu-data-collector.service --now
 echo "systemd 服务已安装并启动 ✅"
 
 # 启用扩展
