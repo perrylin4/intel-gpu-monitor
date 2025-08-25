@@ -5,9 +5,10 @@ import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as Me from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const LOG_PATH = '/var/lib/gpu-monitor/gpu_stats.txt';
-const ICON_PATH = '/home/perry_lin/.local/share/gnome-shell/extensions/intel-gpu-monitor@perry_lin/icons/gpu-symbolic.svg';
+const ICON_PATH = `${Me.dir.get_child('icons').get_child('gpu-symbolic.svg').get_path()}`;
 const REFRESH_INTERVAL = 2; // 刷新间隔(秒)
 
 const GPUMonitorIndicator = GObject.registerClass(
