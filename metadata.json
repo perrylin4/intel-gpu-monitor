@@ -3,6 +3,6 @@
     "description": "通过 DBus 实时显示 Intel GPU 负载",
     "uuid": "intel-gpu-monitor@perry_lin",
     "shell-version": ["46"],
-    "version": 4,
+    "version": 1,
     "url": ""
 }

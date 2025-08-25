@@ -1,11 +1,13 @@
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
+import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 const LOG_PATH = '/var/lib/gpu-monitor/gpu_stats.txt';
+const ICON_PATH = '/home/perry_lin/.local/share/gnome-shell/extensions/intel-gpu-monitor@perry_lin/icons/gpu-symbolic.svg';
 const REFRESH_INTERVAL = 2; // 刷新间隔(秒)
 
 const GPUMonitorIndicator = GObject.registerClass(
@@ -18,11 +20,23 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             style_class: 'panel-status-menu-box'
         });
         this.add_child(this.box);
+
+        const file = Gio.File.new_for_path(ICON_PATH);
+        if (file.query_exists(null)) {
+            const fileIcon = new Gio.FileIcon({ file });
+            this.gpuIcon = new St.Icon({
+                gicon: fileIcon,
+                style_class: 'system-status-icon',
+                icon_size: 32
+            });
+        }
+        else {
+            this.gpuIcon = new St.Icon({
+                icon_name: 'video-display-symbolic',
+                style_class: 'system-status-icon'
+            });
+        }
         
-        this.gpuIcon = new St.Icon({
-            icon_name: 'video-display-symbolic',
-            style_class: 'system-status-icon'
-        });
         this.box.add_child(this.gpuIcon);
         
         this.label = new St.Label({ 
@@ -74,7 +88,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     const usage = this._parseGpuUsage(lastLine);
                     
                     if (usage !== null) {
-                        this.label.text = `GPU: ${usage}%`;
+                        this.label.text = `${usage}%`;
                         this._updateStyle(usage);
                         return;
                     }
@@ -113,7 +127,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             const rcsUsage = parseFloat(match[7]);
             if (!isNaN(rcsUsage)) {
                 console.log(`表格格式解析成功: ${rcsUsage}%`);
-                return Math.round(rcsUsage);
+                return rcsUsage;
             }
         }
         
@@ -166,7 +180,7 @@ let indicator = null;
 export default class GPUMonitorExtension {
     enable() {
         indicator = new GPUMonitorIndicator();
-        Main.panel.addToStatusArea('gpu-monitor-indicator', indicator);
+        Main.panel.addToStatusArea('gpu-monitor-indicator', indicator, -1, 'left');
     }
     
     disable() {
