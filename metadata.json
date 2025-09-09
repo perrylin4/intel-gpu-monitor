@@ -2,7 +2,7 @@
     "name": "Intel GPU Monitor",
     "description": "通过 DBus 实时显示 Intel GPU 负载",
     "uuid": "intel-gpu-monitor@perry_lin",
-    "shell-version": ["46"],
+    "shell-version": ["46","48"],
     "version": 1,
     "url": "https://github.com/perrylin4/intel-gpu-monitor",
     "license": "Unlicense"

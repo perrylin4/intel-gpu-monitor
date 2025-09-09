@@ -62,9 +62,28 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             this.menuItems[name] = item;
         });
 
-        
+        this._themeChangeId = St.ThemeContext.get_for_stage(global.stage).connect(
+            'changed',
+            this._updateMenuColors.bind(this)
+        );
+
         this._timeoutId = null;
         this._setRefreshTimer();
+        this._updateMenuColors();
+    }
+
+    _updateMenuColors() {
+        const themeContext = St.ThemeContext.get_for_stage(global.stage);
+        const isDarkTheme = themeContext.get_theme().get_name().toLowerCase().includes('dark');
+        Object.values(this.menuItems).forEach(label => {
+            if (isDarkTheme) {
+                label.remove_style_class_name('gpu-menu-light');
+                label.add_style_class_name('gpu-menu-dark');
+            } else {
+                label.remove_style_class_name('gpu-menu-dark');
+                label.add_style_class_name('gpu-menu-light');
+            }
+        });
     }
     
     _setRefreshTimer() {
@@ -130,6 +149,8 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     this._updateMenuStyle(this.menuItems.VECS, vecs);
                     this.menuItems.CCS.set_text(`Compute: ${ccs}%`);
                     this._updateMenuStyle(this.menuItems.CCS, ccs);
+
+                    this._updateMenuColors();
 
                     return;
                 }
@@ -233,6 +254,11 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         if (this._timeoutId) {
             GLib.Source.remove(this._timeoutId);
             this._timeoutId = null;
+        }
+
+        if (this._themeChangeId) {
+            St.ThemeContext.get_for_stage(global.stage).disconnect(this._themeChangeId);
+            this._themeChangeId = null;
         }
     }
 });

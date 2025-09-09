@@ -31,11 +31,18 @@
 
 /* 下拉菜单文字样式 */
 .gpu-monitor-menu-label {
-    color: black !important;                  /* 黑色文字 */
     font-family: monospace;        /* 等宽字体 */
     font-size: 16px;               /* 适中字体 */
     padding: 2px 6px;              /* 上下左右间距 */
     margin: 0;                      /* 去掉默认外边距 */
+}
+
+.gpu-menu-dark {
+    color: white !important;        /* 白色文字 */
+}
+
+.gpu-menu-light {
+    color: black !important;        /* 黑色文字 */
 }
 
 
