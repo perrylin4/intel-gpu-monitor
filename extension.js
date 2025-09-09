@@ -73,8 +73,10 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     }
 
     _updateMenuColors() {
-        const themeContext = St.ThemeContext.get_for_stage(global.stage);
-        const isDarkTheme = themeContext.get_theme().get_name().toLowerCase().includes('dark');
+        const settings = new Gio.Settings({ schema: 'org.gnome.desktop.interface' });
+        const colorScheme = settings.get_string('color-scheme');
+        const isDarkTheme = colorScheme === 'prefer-dark';
+        
         Object.values(this.menuItems).forEach(label => {
             if (isDarkTheme) {
                 label.remove_style_class_name('gpu-menu-light');
