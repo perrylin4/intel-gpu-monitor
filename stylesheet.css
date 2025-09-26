@@ -95,12 +95,35 @@
     color: #4caf50; /* 绿色 */
 }
 
+/* 中功率警告 */
+.power-monitor-medium{
+    color: #ff8000 !important; /* 橙色 */
+    /* animation: pulse 1s infinite alternate; */
+}
+
+.power-icon-orange {
+    color: #ff9900 !important; /* 橙色 */
+}
+
 /* 高功率警告 */
-.power-monitor-high {
-    color: #ff6b6b !important; /* 红色 */
+.power-monitor-high{
+    color: #ff0000 !important; /* 红色 */
+    animation: pulse 5s infinite alternate;
+}
+
+/* 电源图标红色 */
+.power-icon-red {
+    color: #ff3c00 !important; /* 红色 */
+}
+
+/* 极限功率警告 */
+.power-monitor-max{
+    color: #8a0000 !important; /* 深红色 */
+    font-weight: bold; /* 加粗 */
     animation: pulse 1s infinite alternate;
 }
 
-.power-icon-red {
-    color: #ff6b6b !important; /* 红色 */
+.power-bg-max {
+    background-color: #ffd000 !important; /* 亮黄色背景 */
+    border-radius: 999px !important;
 }

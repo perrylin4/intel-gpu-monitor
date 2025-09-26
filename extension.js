@@ -43,10 +43,10 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         this.box.add_child(this.gpuIcon);
         
         this.label = new St.Label({ 
-            text: "0%",
+            text: "0% | 0 MHz",
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'gpu-monitor-label',
-            width: 75,
+            width: 200,
             x_align: Clutter.ActorAlign.START
         });
         this.box.add_child(this.label);
@@ -74,7 +74,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             text: "0W",
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'power-monitor-label',
-            width: 75,
+            width: 70,
             x_align: Clutter.ActorAlign.START
         });
         this.box.add_child(this.powerLabel);
@@ -94,7 +94,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         });
         // 添加频率显示项
         this.freqItem = new St.Label({ 
-            text: "Freq: N/A", 
+            text: "GPUFreq: N/A", 
             x_align: Clutter.ActorAlign.START,
             style_class: 'gpu-monitor-menu-label'
         });
@@ -147,7 +147,6 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             REFRESH_INTERVAL,
             () => {
                 this._getGpuFrequency();
-                this._readGpuData();
                 this._readPowerData();
                 this.label.text = this.displayText;
                 return GLib.SOURCE_CONTINUE;
@@ -316,6 +315,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             subprocess.init(null);
 
             subprocess.communicate_utf8_async(null, null, (proc, res) => {
+                this._readGpuData(); // 每次获取频率时也更新GPU使用率
                 try {
                     let [, stdout, stderr] = proc.communicate_utf8_finish(res);
                     if (proc.get_exit_status() === 0) {
@@ -353,7 +353,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         } catch (e) {
             console.error(`启动频率获取命令失败: ${e}`);
             this.freqItem.set_text('Freq: ERR');
-            this.displayText = ' | ERR MHz';
+            this.displayText += ' | ERR MHz';
         }
     }
     
@@ -362,12 +362,12 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         this.label.remove_style_class_name('gpu-monitor-label-medium');
         this.label.remove_style_class_name('gpu-monitor-label-max');
         this.label.remove_style_class_name('gpu-monitor-label-error');
-        this.remove_style_class_name('gpu-monitor-bg-max');
+        this.label.remove_style_class_name('gpu-monitor-bg-max');
         this.gpuIcon.remove_style_class_name('gpu-icon-red');
         
         if (usage > 95) {
             this.label.add_style_class_name('gpu-monitor-label-max');
-            this.add_style_class_name('gpu-monitor-bg-max');
+            this.label.add_style_class_name('gpu-monitor-bg-max');
             this.gpuIcon.add_style_class_name('gpu-icon-red');
         } else if (usage > 80) {
             this.label.add_style_class_name('gpu-monitor-label-high');
@@ -377,13 +377,28 @@ class GPUMonitorIndicator extends PanelMenu.Button {
     }
 
     _updatePowerStyle(power) {
+        this.powerLabel.remove_style_class_name('power-monitor-medium');
+        this.powerIcon.remove_style_class_name('power-icon-orange');
         this.powerLabel.remove_style_class_name('power-monitor-high');
         this.powerIcon.remove_style_class_name('power-icon-red');
-        
-        if (power > 80) {
+        this.powerLabel.remove_style_class_name('power-monitor-max');
+        this.powerLabel.remove_style_class_name('power-bg-max');
+
+        if (power > 130) {
+            this.powerLabel.add_style_class_name('power-monitor-max');
+            this.powerIcon.add_style_class_name('power-icon-red');
+            this.powerLabel.add_style_class_name('power-bg-max');
+        } 
+        else if (power > 100) {
             this.powerLabel.add_style_class_name('power-monitor-high');
             this.powerIcon.add_style_class_name('power-icon-red');
         }
+        else if (power > 80) {
+            this.powerLabel.add_style_class_name('power-monitor-medium');
+            this.powerIcon.add_style_class_name('power-icon-orange');
+        }
+        
+
     }
 
     _updateMenuStyle(label, usage) {
