@@ -134,6 +134,7 @@ sudo journalctl -u gpu-data-collector.service -f
 ## ✅ 已测试环境
 - GNOME Shell 46 ✅
 - Ubuntu 24.04 ✅
+- Ubuntu 25.04 ✅
 
 如果 GNOME Shell 版本较低，可能需要修改 `metadata.json`。
 
