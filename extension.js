@@ -8,7 +8,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 const LOG_PATH = '/var/lib/gpu-monitor/gpu_stats.txt';
-const ICON_PATH = `${GLib.get_home_dir()}/.local/share/gnome-shell/extensions/intel-gpu-monitor@perry_lin/icons/gpu-symbolic.svg`;
+const POWER_LOG_PATH = '/var/lib/power-monitor/power_stats.txt';
+const ICON_PATH = `${GLib.get_home_dir()}/.local/share/gnome-shell/extensions/intel-gpu-monitor@perry_lin/icons/`;
 const REFRESH_INTERVAL = 1; // 刷新间隔(秒)
 
 const GPUMonitorIndicator = GObject.registerClass(
@@ -23,13 +24,13 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         });
         this.add_child(this.box);
 
-        const file = Gio.File.new_for_path(ICON_PATH);
+        const file = Gio.File.new_for_path(ICON_PATH + 'gpu-symbolic.svg');
         if (file.query_exists(null)) {
             const fileIcon = new Gio.FileIcon({ file });
             this.gpuIcon = new St.Icon({
                 gicon: fileIcon,
                 style_class: 'system-status-icon',
-                icon_size: 32
+                icon_size: 28
             });
         }
         else {
@@ -44,9 +45,39 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         this.label = new St.Label({ 
             text: "0%",
             y_align: Clutter.ActorAlign.CENTER,
-            style_class: 'gpu-monitor-label'
+            style_class: 'gpu-monitor-label',
+            width: 75,
+            x_align: Clutter.ActorAlign.START
         });
         this.box.add_child(this.label);
+
+        // 功率图标
+        const powerFile = Gio.File.new_for_path(ICON_PATH + 'power-symbolic.svg');
+        if (powerFile.query_exists(null)) {
+            const fileIcon = new Gio.FileIcon({ file: powerFile });
+            this.powerIcon = new St.Icon({
+                gicon: fileIcon,
+                style_class: 'system-status-icon',
+                icon_size: 28
+            });
+        }
+        else {
+            this.powerIcon = new St.Icon({
+                icon_name: 'battery-full-symbolic',
+                style_class: 'system-status-icon'
+            });
+        }
+        this.box.add_child(this.powerIcon);
+
+        // 功率标签
+        this.powerLabel = new St.Label({ 
+            text: "0W",
+            y_align: Clutter.ActorAlign.CENTER,
+            style_class: 'power-monitor-label',
+            width: 75,
+            x_align: Clutter.ActorAlign.START
+        });
+        this.box.add_child(this.powerLabel);
         
         // 下拉菜单
         this.menuItems = {};
@@ -77,6 +108,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         );
 
         this._timeoutId = null;
+        this.displayText = "";
         this._setRefreshTimer();
         this._updateMenuColors();
     }
@@ -114,8 +146,10 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             GLib.PRIORITY_DEFAULT,
             REFRESH_INTERVAL,
             () => {
-                this._readGpuData();
                 this._getGpuFrequency();
+                this._readGpuData();
+                this._readPowerData();
+                this.label.text = this.displayText;
                 return GLib.SOURCE_CONTINUE;
             }
         );
@@ -125,7 +159,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         try {
             // 检查文件是否存在
             if (!GLib.file_test(LOG_PATH, GLib.FileTest.EXISTS)) {
-                this.label.text = "NOFILE";
+                this.displayText = "NOFILE";
                 return;
             }
             
@@ -143,7 +177,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     // 表格格式匹配: Freq act IRQ RC6 gpu pkg RCS BCS VCS VECS CCS
                     const parts = lastLine.split(/\s+/);
                     if (parts.length < 19) {
-                        this.label.text = 'NODATA';
+                        this.displayText = 'NODATA';
                         return;
                     }
 
@@ -155,7 +189,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     const ccs = parseFloat(parts[18] || 0);
 
                     const maxUsage = Math.max(rcs, bcs, vcs, vecs, ccs);
-                    this.label.text = `${maxUsage}%`;
+                    this.displayText = `${maxUsage}%`;
                     this._updateStyle(maxUsage);
 
                     // 更新下拉菜单
@@ -175,11 +209,49 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                     return;
                 }
             }
-            
-            this.label.text = "NODATA";
+
+            this.displayText = "NODATA";
         } catch (e) {
             console.error(`GPU数据错误: ${e}`);
-            this.label.text = "ERR";
+            this.displayText = "ERR";
+        }
+    }
+
+    _readPowerData() {
+        try {
+            // 检查文件是否存在
+            if (!GLib.file_test(POWER_LOG_PATH, GLib.FileTest.EXISTS)) {
+                this.powerLabel.text = "NOFILE";
+                return;
+            }
+            
+            const [success, bytes] = GLib.file_get_contents(POWER_LOG_PATH);
+            
+            if (success && bytes.length > 0) {
+                const decoder = new TextDecoder();
+                const text = decoder.decode(bytes);
+
+                // 获取倒数第二行非空行，防止最后一行未输出完
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                if (lines.length > 2) {
+                    const lastLine = lines[lines.length - 2].trim();
+                    
+                    // 解析功率值 - 根据新的输出格式
+                    const parts = lastLine.split(/\s+/);
+                    if (parts.length >= 13) {
+                        // 功率值是最后一个字段
+                        const power = parseFloat(parts[12]);
+                        if (!isNaN(power)) {
+                            this.powerLabel.text = `${power.toFixed(1)}W`;
+                            this._updatePowerStyle(power);
+                            return;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`功率数据错误: ${e}`);
+            this.powerLabel.text = "ERR";
         }
     }
     
@@ -266,18 +338,22 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                         }
                         
                         this.freqItem.set_text(`Freq: ${minFreq} | ${curFreq} | ${maxFreq} MHz`);
+                        this.displayText += ` | ${curFreq} MHz`;
                     } else {
                         console.error(`intel_gpu_frequency error: ${stderr}`);
                         this.freqItem.set_text('Freq: ERR');
+                        this.displayText += ' | ERR MHz';
                     }
                 } catch (e) {
                     console.error(`获取频率失败: ${e}`);
                     this.freqItem.set_text('Freq: ERR');
+                    this.displayText += ' | ERR MHz';
                 }
             });
         } catch (e) {
             console.error(`启动频率获取命令失败: ${e}`);
             this.freqItem.set_text('Freq: ERR');
+            this.displayText = ' | ERR MHz';
         }
     }
     
@@ -297,6 +373,16 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             this.label.add_style_class_name('gpu-monitor-label-high');
         } else if (usage > 60) {
             this.label.add_style_class_name('gpu-monitor-label-medium');
+        }
+    }
+
+    _updatePowerStyle(power) {
+        this.powerLabel.remove_style_class_name('power-monitor-high');
+        this.powerIcon.remove_style_class_name('power-icon-red');
+        
+        if (power > 80) {
+            this.powerLabel.add_style_class_name('power-monitor-high');
+            this.powerIcon.add_style_class_name('power-icon-red');
         }
     }
 

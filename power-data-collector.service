@@ -1,0 +1,19 @@
+[Unit]
+Description=Power Data Collector
+After=network.target
+
+[Service]
+User=root
+ExecStartPre=/bin/rm -f /var/lib/power-monitor/power_stats.txt
+ExecStartPre=/bin/mkdir -p /var/lib/power-monitor
+ExecStartPre=/bin/touch /var/lib/power-monitor/power_stats.txt
+ExecStartPre=/bin/chmod 644 /var/lib/power-monitor/power_stats.txt
+ExecStart=sudo /usr/bin/bash -c "stdbuf -oL /usr/bin/powerstat -R -d 0 1 3600 > /var/lib/power-monitor/power_stats.txt"
+RuntimeMaxSec=1800
+Restart=always
+RestartSec=5
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

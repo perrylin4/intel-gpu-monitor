@@ -6,7 +6,10 @@ EXTENSION_UUID="intel-gpu-monitor@perry_lin"
 EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 SERVICE_PATH="/etc/systemd/system/gpu-data-collector.service"
 TIMER_PATH="/etc/systemd/system/gpu-data-collector.timer"
+POWER_SERVICE_PATH="/etc/systemd/system/power-data-collector.service"
+POWER_TIMER_PATH="/etc/systemd/system/power-data-collector.timer"
 LOG_PATH="/var/lib/gpu-monitor/gpu_stats.txt"
+POWER_LOG_PATH="/var/lib/gpu-monitor/power_stats.txt"
 
 # ----------------------------
 # 1. 停止并禁用 systemd 服务
@@ -25,6 +28,18 @@ if systemctl list-unit-files | grep -q "gpu-data-collector.timer"; then
     sudo rm -f "$TIMER_PATH"
 fi
 
+if systemctl list-unit-files | grep -q "power-data-collector.service"; then
+    sudo systemctl stop power-data-collector.service || true
+    sudo systemctl disable power-data-collector.service || true
+    sudo rm -f "$POWER_SERVICE_PATH"
+fi
+
+if systemctl list-unit-files | grep -q "power-data-collector.timer"; then
+    sudo systemctl stop power-data-collector.timer || true
+    sudo systemctl disable power-data-collector.timer || true
+    sudo rm -f "$POWER_TIMER_PATH"
+fi
+
 sudo systemctl daemon-reload
 
 # ----------------------------
@@ -32,6 +47,8 @@ sudo systemctl daemon-reload
 # ----------------------------
 echo "[INFO] 删除 GPU 数据日志..."
 sudo rm -f "$LOG_PATH"
+sudo rmdir --ignore-fail-on-non-empty /var/lib/gpu-monitor || true
+sudo rm -f "$POWER_LOG_PATH"
 sudo rmdir --ignore-fail-on-non-empty /var/lib/gpu-monitor || true
 
 # ----------------------------

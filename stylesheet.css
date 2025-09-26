@@ -87,3 +87,20 @@
     background-color: #ffe85a !important; /* 淡黄白 */
     box-shadow: 0 0 4px rgba(255, 240, 100, 0.6);
 }
+
+.power-monitor-label {
+    font-family: monospace;
+    font-size: 18px;
+    margin-left: 8px;
+    color: #4caf50; /* 绿色 */
+}
+
+/* 高功率警告 */
+.power-monitor-high {
+    color: #ff6b6b !important; /* 红色 */
+    animation: pulse 1s infinite alternate;
+}
+
+.power-icon-red {
+    color: #ff6b6b !important; /* 红色 */
+}

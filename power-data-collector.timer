@@ -1,0 +1,9 @@
+[Unit]
+Description=Restart Power Data Collector every 30 minutes
+
+[Timer]
+OnUnitActiveSec=30m
+Unit=power-data-collector.service
+
+[Install]
+WantedBy=timers.target
