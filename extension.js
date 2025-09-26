@@ -108,7 +108,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         );
 
         this._timeoutId = null;
-        this.displayText = "";
+        this.displayText = "0% | 0 MHz";
         this._setRefreshTimer();
         this._updateMenuColors();
     }
