@@ -61,6 +61,15 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             this.menu.addMenuItem(menuItem);
             this.menuItems[name] = item;
         });
+        // 添加频率显示项
+        this.freqItem = new St.Label({ 
+            text: "Freq: N/A", 
+            x_align: Clutter.ActorAlign.START,
+            style_class: 'gpu-monitor-menu-label'
+        });
+        const freqMenuItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+        freqMenuItem.add_child(this.freqItem);
+        this.menu.addMenuItem(freqMenuItem);
 
         this._themeChangeId = St.ThemeContext.get_for_stage(global.stage).connect(
             'changed',
@@ -86,6 +95,14 @@ class GPUMonitorIndicator extends PanelMenu.Button {
                 label.add_style_class_name('gpu-menu-light');
             }
         });
+        // 更新频率显示项的颜色
+        if (isDarkTheme) {
+            this.freqItem.remove_style_class_name('gpu-menu-light');
+            this.freqItem.add_style_class_name('gpu-menu-dark');
+        } else {
+            this.freqItem.remove_style_class_name('gpu-menu-dark');
+            this.freqItem.add_style_class_name('gpu-menu-light');
+        }
     }
     
     _setRefreshTimer() {
@@ -98,6 +115,7 @@ class GPUMonitorIndicator extends PanelMenu.Button {
             REFRESH_INTERVAL,
             () => {
                 this._readGpuData();
+                this._getGpuFrequency();
                 return GLib.SOURCE_CONTINUE;
             }
         );
@@ -216,6 +234,51 @@ class GPUMonitorIndicator extends PanelMenu.Button {
         
         console.log("无法解析GPU使用率");
         return null;
+    }
+    _getGpuFrequency() {
+        try {
+            let subprocess = new Gio.Subprocess({
+                argv: ['sudo', 'intel_gpu_frequency', '-g'],
+                flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+            });
+            subprocess.init(null);
+
+            subprocess.communicate_utf8_async(null, null, (proc, res) => {
+                try {
+                    let [, stdout, stderr] = proc.communicate_utf8_finish(res);
+                    if (proc.get_exit_status() === 0) {
+                        let minFreq = 'N/A';
+                        let curFreq = 'N/A';
+                        let maxFreq = 'N/A';
+                        
+                        const lines = stdout.split('\n');
+                        for (let line of lines) {
+                            if (line.includes('min:')) {
+                                const match = line.match(/min: \s*(\d+)\s* MHz/);
+                                if (match) minFreq = match[1];
+                            } else if (line.includes('cur:')) {
+                                const match = line.match(/cur: \s*(\d+)\s* MHz/);
+                                if (match) curFreq = match[1];
+                            } else if (line.includes('max:')) {
+                                const match = line.match(/max: \s*(\d+)\s* MHz/);
+                                if (match) maxFreq = match[1];
+                            }
+                        }
+                        
+                        this.freqItem.set_text(`Freq: ${minFreq} | ${curFreq} | ${maxFreq} MHz`);
+                    } else {
+                        console.error(`intel_gpu_frequency error: ${stderr}`);
+                        this.freqItem.set_text('Freq: ERR');
+                    }
+                } catch (e) {
+                    console.error(`获取频率失败: ${e}`);
+                    this.freqItem.set_text('Freq: ERR');
+                }
+            });
+        } catch (e) {
+            console.error(`启动频率获取命令失败: ${e}`);
+            this.freqItem.set_text('Freq: ERR');
+        }
     }
     
     _updateStyle(usage) {
